@@ -1,0 +1,12 @@
+{
+    "name": "50postinho/haxball",
+    "description": "Scripts do vt",
+    "author": "gordin",
+    "config": {
+      "path": "src"
+    },
+    "plugins": [
+        "gordin/botin",
+      "testes/botintestes"
+    ]
+  }
