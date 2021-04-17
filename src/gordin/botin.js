@@ -126,6 +126,8 @@ room.onPlayerJoin = (player) => {
 	//adiciona na lista 
 	connList[player.conn] = player.name;
 
+	console.log('Testando');
+
 	//se o player nunca entrou na lista cria objeto em stats
 	if (stats[player.name] == null) {
 		stats[player.name] = {"gols" : 0, "assists" : 0, "vitorias": 0, "derrotas": 0};
