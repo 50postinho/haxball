@@ -67,7 +67,7 @@ function onRestoreHandler(data, pluginSpec) {
 
 	stats = data["stats"];
 
-	room.log('Restorou', HHM.log.level.WARN);
+	room.log('Restoroussss', HHM.log.level.WARN);
 	//room.log('Restore', HHM.log.level.WARN);
 	//room.log('Vai', HHM.log.level.WARN);
 	//room.log(data["stats"], HHM.log.level.WARN);
