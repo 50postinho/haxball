@@ -56,16 +56,31 @@ function getRoles() {
 function onRestoreHandler(data, pluginSpec) {
 
 	//se não existir nada cria 
-	if (data == null) {
+	if (data == null || data["stats"] == undefined) {
+		//room.log('Resolveu', HHM.log.level.WARN);
 		data = {'stats': {} }
 	}
+
+
 	stats = data["stats"];
+
+	//room.log('Restore', HHM.log.level.WARN);
+	//room.log('Vai', HHM.log.level.WARN);
+	//room.log(data["stats"], HHM.log.level.WARN);
+	//room.log(JSON.stringify(stats), HHM.log.level.WARN);
 }
 
 
 //salva  stats de 5 em 5 minutos e manda para db
 function onPersistHandler() {
+	if(stats == undefined)
+	{
+		stats = {};
+	}
+	//room.log("Começa persist", HHM.log.level.WARN);
 	postData('https://gfvt.herokuapp.com/stats', prepData()).then();
+
+	//room.log("Passa do postData", HHM.log.level.WARN);
 
 	let cDate = new Date(); 
 	let data = `${cDate.getDate()}_${cDate.getMonth()}_${cDate.getFullYear()}` 
@@ -75,6 +90,8 @@ function onPersistHandler() {
 
 	const saveChat = new Blob([JSON.stringify(chat, null, 2)], {type : 'application/json'});
 	haxroomie.download({ fileName: `chat_${data}.txt`, file: saveChat});
+
+	//room.log(stats, HHM.log.level.WARN);
 
 	return {
 		stats,
@@ -126,13 +143,13 @@ room.onPlayerJoin = (player) => {
 	//adiciona na lista 
 	connList[player.conn] = player.name;
 
-	console.log('Testando');
-
 	//se o player nunca entrou na lista cria objeto em stats
+	//room.log(stats, HHM.log.level.WARN);
 	if (stats[player.name] == null) {
 		stats[player.name] = {"gols" : 0, "assists" : 0, "vitorias": 0, "derrotas": 0};
 	}
 	room.sendAnnouncement(`Seja bem vindo ${player.name}, digite !stats para ver suas estatísticas.`);
+	//room.log(JSON.stringify(stats), HHM.log.level.WARN);
 }
 
 room.onPlayerChat = (player, message) => {
