@@ -67,7 +67,8 @@ function onRestoreHandler(data, pluginSpec) {
 	//room.log('Restore', HHM.log.level.WARN);
 	//room.log('Vai', HHM.log.level.WARN);
 	//room.log(data["stats"], HHM.log.level.WARN);
-	//room.log(JSON.stringify(stats), HHM.log.level.WARN);
+	room.log('Restore', HHM.log.level.WARN);
+	room.log(JSON.stringify(stats), HHM.log.level.WARN);
 }
 
 
@@ -92,6 +93,8 @@ function onPersistHandler() {
 	haxroomie.download({ fileName: `chat_${data}.txt`, file: saveChat});
 
 	//room.log(stats, HHM.log.level.WARN);
+	room.log('Persist', HHM.log.level.WARN);
+	room.log(JSON.stringify(stats), HHM.log.level.WARN);
 
 	return {
 		stats,
