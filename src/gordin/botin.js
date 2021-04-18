@@ -16,6 +16,8 @@ var second_toucher;
 let stats;
 let connList;
 let linkUrl;
+let lastHour = -1;
+let cDate;
 /*
 O stats guarda os dados do player usando auth como chave para garantir que só vai ter um player com esse nome e dados.
 stats é um objeto definido:
@@ -56,9 +58,9 @@ function getRoles() {
 function onRestoreHandler(data, pluginSpec) {
 
 	//se não existir nada cria 
-	if (data == null || data["stats"] == undefined) {
+	if (data == null) {
 		//room.log('Resolveu', HHM.log.level.WARN);
-		data = {'stats': {} }
+		data = {'stats': {}, 'chat': [] }
 	}
 
 
@@ -67,8 +69,8 @@ function onRestoreHandler(data, pluginSpec) {
 	//room.log('Restore', HHM.log.level.WARN);
 	//room.log('Vai', HHM.log.level.WARN);
 	//room.log(data["stats"], HHM.log.level.WARN);
-	room.log('Restore', HHM.log.level.WARN);
-	room.log(JSON.stringify(stats), HHM.log.level.WARN);
+	//room.log('Restore', HHM.log.level.WARN);
+	//room.log(JSON.stringify(chat), HHM.log.level.WARN);
 }
 
 
@@ -78,12 +80,16 @@ function onPersistHandler() {
 	{
 		stats = {};
 	}
+	if(chat == undefined || chat == null)
+	{
+		chat = [];
+	}
 	//room.log("Começa persist", HHM.log.level.WARN);
-	postData('https://gfvt.herokuapp.com/stats', prepData()).then();
+	//postData('https://gfvt.herokuapp.com/stats', prepData()).then();
 
 	//room.log("Passa do postData", HHM.log.level.WARN);
 
-	let cDate = new Date(); 
+	cDate = new Date(); 
 	let data = `${cDate.getDate()}_${cDate.getMonth()}_${cDate.getFullYear()}` 
 
 	const saveStats = new Blob([JSON.stringify(stats, null, 2)], {type : 'application/json'});
@@ -92,12 +98,19 @@ function onPersistHandler() {
 	const saveChat = new Blob([JSON.stringify(chat, null, 2)], {type : 'application/json'});
 	haxroomie.download({ fileName: `chat_${data}.txt`, file: saveChat});
 
-	//room.log(stats, HHM.log.level.WARN);
-	room.log('Persist', HHM.log.level.WARN);
-	room.log(JSON.stringify(stats), HHM.log.level.WARN);
+	if (cDate.getHours() == 0 && lastHour != 0)
+	{
+		//New day - Clear chat
+		chat = []
+	}
+	lastHour = cDate.getHours();
+
+	//room.log('Chat do Persist', HHM.log.level.WARN);
+	//room.log(JSON.stringify(chat), HHM.log.level.WARN);
 
 	return {
 		stats,
+		chat,
 	}
 }
 
@@ -127,7 +140,7 @@ function getBluePlayers() {
 function onRoomLinkHandler(link) {
 	linkUrl = link;
 	connList = {};
-	chat = [];
+	//chat = [];
 }
 
 //quando player entra 
@@ -152,12 +165,14 @@ room.onPlayerJoin = (player) => {
 		stats[player.name] = {"gols" : 0, "assists" : 0, "vitorias": 0, "derrotas": 0};
 	}
 	room.sendAnnouncement(`Seja bem vindo ${player.name}, digite !stats para ver suas estatísticas.`);
-	//room.log(JSON.stringify(stats), HHM.log.level.WARN);
+	
+	room.log(JSON.stringify(player), HHM.log.level.WARN);
 }
 
 room.onPlayerChat = (player, message) => {
-	let cDate = new Date(); 
-	let hora = `${cDate.getHours()}:${cDate.getMinutes()}` 
+	cDate = new Date(); 
+	let hora = cDate.getHours().toString().padStart(2, "0") + ":" + 
+		cDate.getMinutes().toString().padStart(2, "0");
 	chat.push({"nome": player.name, "msg": message, "hora": hora});
 }
 
@@ -250,13 +265,55 @@ room.onCommand_stats = (player, playerName) => {
 	}
 }
 
+//reseta status geral, só para admins
+/*room.onCommand_poster = (player, playerName) => {
+	roles = getRoles()
+
+	//room.log(roles.hasPlayerRole(player.id, "host"), HHM.log.level.WARN);
+	//room.log(roles.hasPlayerRole(player.id, "admin"), HHM.log.level.WARN);
+
+	if (roles.hasPlayerRole(player.id, "host") != true) {
+		room.log('Entrou no if', HHM.log.level.WARN);
+		return;
+	}
+
+	if (playerName != "") {
+		playerName = String(playerName).replace(/,/g," ");
+
+		playerFind = null;
+
+		for (let i in room.getPlayerList())
+		{
+			//room.log(JSON.stringify(room.getPlayerList()[i]), HHM.log.level.WARN);
+			if(room.getPlayerList()[i].name == playerName)
+				playerFind = room.getPlayerList()[i];
+		}
+
+		room.log(JSON.stringify(playerFind), HHM.log.level.WARN);
+
+		if (playerFind == null) {
+			room.sendAnnouncement(`Usuário não encontrado 😥.`, player.id);
+		} else {
+			roles = getRoles()
+			roles.addPlayerRole(playerFind["id"], "admin");
+			room.sendAnnouncement(`Usuário ${playerFind.name} agora é admin`, 
+				player.id);
+		}
+	}
+}*/
+
+/*room.onCommand0_testChat = (player) => {
+	
+	room.log('TESTCHAT', HHM.log.level.WARN);
+	room.log(JSON.stringify(chat), HHM.log.level.WARN);
+}*/
 
 //reseta status geral, só para admins
 room.onCommand0_resetstatsall = (player) => {
 
 	roles = getRoles()
 	//checa se player é admin "oficial"
-	if (roles.hasPlayerRole(player.id, "admin") == true) {
+	if (roles.hasPlayerRole(player.id, "host") == true) {
 		stats = {}
 		for (let i in room.getPlayerList()) {
 			stats[room.getPlayerList()[i].name] = {}
@@ -322,7 +379,7 @@ room.onCommand0_top5ganhadores = () => {
 //apagastats
 room.onCommand_apagarstats = (player, playerName) => {
 	roles = getRoles()
-	if (roles.hasPlayerRole(player.id, "admin") == true) {
+	if (roles.hasPlayerRole(player.id, "host") == true) {
 		if (playerName != "") {
 			playerN = String(playerName).replace(/,/g," ");
 			delete stats[playerN]
@@ -333,7 +390,7 @@ room.onCommand_apagarstats = (player, playerName) => {
 //transfere stats de um player para outro (para admins)
 room.onCommand_transferirstats = (player, playerName) => {
 	roles = getRoles()
-	if (roles.hasPlayerRole(player.id, "admin") == true) {
+	if (roles.hasPlayerRole(player.id, "host") == true) {
 		if (playerName != "") {
 			indiceMetade = playerName.indexOf("?");
 			
@@ -362,7 +419,7 @@ room.onCommand_transferirstats = (player, playerName) => {
 //salva DB imediatamente, só para admins
 room.onCommand0_savedb = (player) => {
 	roles = getRoles()
-	if (roles.hasPlayerRole(player.id, "admin") == true) {
+	if (roles.hasPlayerRole(player.id, "host") == true) {
 			room.getPlugin("hhm/persistence").persistPluginData(room);
 			room.sendAnnouncement(`DB salvo com sucesso.`);
 	}
