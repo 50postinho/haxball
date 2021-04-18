@@ -18,6 +18,7 @@ let connList;
 let linkUrl;
 let lastHour = -1;
 let cDate;
+let chat;
 /*
 O stats guarda os dados do player usando auth como chave para garantir que só vai ter um player com esse nome e dados.
 stats é um objeto definido:
